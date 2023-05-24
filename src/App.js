@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import './App.css';
 import axios from 'axios';
+import LoadingComponent from './LoadingComponent';
 // import maskedImageA from "./images/maskedImage.jpg"
 
 export default class App extends Component {
@@ -12,12 +13,16 @@ export default class App extends Component {
       showPopup: false,
       maskedImage: null,
       imageFile:null,
-      imageUrl:null
+      imageUrl:null,
+      isLoading:false
     }  }
     togglePopup = () => {
-      this.setState({
-        showPopup: !this.state.showPopup
-      });
+      if (!this.state.isLoading){
+        this.setState({
+          showPopup: !this.state.showPopup
+        });
+      }
+      
     }
     handleFileUpload = event => {
       const file = event.target.files[0];
@@ -35,6 +40,9 @@ export default class App extends Component {
   
     handleSubmit = event => {
       
+      this.setState({
+        isLoading: true
+      })
       event.preventDefault();
       const formData = new FormData();
       formData.append("image", this.state.imageFile);
@@ -47,14 +55,15 @@ export default class App extends Component {
           this.setState({
             result: response.data.result
           })
-          this.setState({ maskedImage: `data:image/jpeg;base64,${response.data.imageData}` });    
+          this.setState({ maskedImage: response.data.imageData,
+          isLoading:false });    
         })
       this.togglePopup();
     }
 
   render() {
     return (
-      this.state.showPopup? (<div>
+      ((this.state.showPopup && !this.state.isLoading)? (<div>
         {this.state.showPopup && (
           <div className="popup">
             <div className="popup-inner">
@@ -84,7 +93,7 @@ export default class App extends Component {
             <div className='imageBox'>
               <div className='image'>
               {this.state.maskedImage && (
-                  <img className = 'act-image' src={this.state.maskedImage} style={{height:100,width:100}} />
+                <img className = 'act-image' src={`data:image/jpg;base64,${this.state.maskedImage}`} alt="Image"  />
                 )}
               </div>
               <div className='button'>
@@ -92,14 +101,26 @@ export default class App extends Component {
               </div>
             </div>
         </div>
-        <div className='result-box'>
-          <h1> Result: {this.state.result} </h1>
+       <div className='result-box'>
+          <div className='result-tag'>
+          <h1> Result:  </h1>
+          </div>
+          {(this.state.result === "Tumor Positive") && <div className = 'result-datap'>
+            <h1>{this.state.result}</h1>
+          </div>}
+          {(this.state.result === "Tumor Negative") && <div className = 'result-datan'>
+            <h1>{this.state.result}</h1>
+          </div>}
+          
         </div>
+        
         <div className='uploadButton' onClick={this.togglePopup}>
-            <h3>Click Here To Upload a New Page</h3>
+            <h3>Click Here To Upload a New Image</h3>
         </div>
       </div>
-    </div>)
+      {this.state.isLoading && <LoadingComponent />}
+    </div>
+    ))
       
     )
   }
